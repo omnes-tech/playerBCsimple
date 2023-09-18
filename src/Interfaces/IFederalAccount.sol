@@ -8,18 +8,18 @@ interface IFederalAccount {
     //function generateBaseAccount(address _manager) external;
 
     ///@dev Function that generates a transfer request
-    ///@param _vote is the voting to be approved
+    ///@param _player is the voting to be approved
     ///@notice only a base account can create
-    function generatePlayerRequest(bytes32 _vote) external;
+    function generatePlayerRequest(uint _player) external;
 
     ///@dev Function to accept a transfer request
-    ///@param _vote  is the transfer to be approved
-    function acceptVoteFederal(bytes32 _vote) external;
+    ///@param _player  is the transfer to be approved
+    function acceptVoteFederal(uint _player, address _base) external;
 
     ///@dev Function to execute the transaction
-    ///@param _transaction is the transaction ID
+    ///@param _player is the transaction ID
     ///@notice only international account can trigger that
-    function executeTransactionBase(bytes32 _transaction) external;
+    function executeTransactionBase(uint _player, address _base) external;
 
     ///@dev Function to add a new base account under this entity accepted addresses of base accounts
     ///@param _baseAccount is the base account address to be added

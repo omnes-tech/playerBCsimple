@@ -29,6 +29,9 @@ event voteCreated(uint256 indexed _player, bytes32 indexed _voteId, address inde
         address _team;
         uint256 _playerId;
         uint256 _price;
+        bool _bothAcept;
+        bool _teamAccept;
+        bool _stakeholderAccept;
     }
 
     struct voting {
@@ -54,7 +57,9 @@ uint256 constant _24YEARS = 365 days * 24;
     mapping(uint256 => TrainerInfo[]) public trainers;
 
     mapping(address => playerTransfer) public transfers;
-    mapping(bytes32 => receipt) public vote;
+    mapping(address => receipt) public vote;
+
+    mapping(address => mapping(address => playerTransfer)) acceptTransfers;
 
     address public COIN;
 
@@ -124,11 +129,14 @@ if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
 
 
 
-function _solidarityMechanism(uint _value, address _base, address _time) internal{
+function _solidarityMechanism(uint _value, address _base, address _team) internal {
     uint256 fivePercentBase = _value*100/5; //5%
     uint amountTransfer = _value - fivePercentBase;
     
     IERC20(COIN).transfer(_base, fivePercentBase);
+    IERC20(COIN).transfer(_team, amountTransfer);
+
+
 }
 
 
@@ -155,17 +163,25 @@ international[_manager]=true;
 //federalaccounts ----
 
 
-    function generatePlayerRequest(bytes32 _vote) external{
+    function generatePlayerRequest(uint _playerID) external{
 
     }
 
-    function acceptVoteFederal(bytes32 _vote) external{
-
+    function acceptVoteFederal(uint _playerID, address _base) external{
+        baseAccountCheck(_base);
+        if(acceptTransfers[msg.sender][_base]._teamAccept == true){
+        acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
+        } else {
+            revert("team not Request transfer this player");
+        }
     }
 
     
-    function executeTransactionBase(bytes32 _transaction) external{
-
+    function executeTransactionBase(uint _playerID, address _base) external{
+        _isFederal();
+        baseAccountCheck(_base);
+        require(acceptTransfers[msg.sender][_base]._bothAcept = true, "not both accept transfer player");
+        
     }
 
     
@@ -186,15 +202,19 @@ international[_manager]=true;
 
 //baseaccounts ----
 
-function generatePlayerRequest(uint256 _playerID, address _transferTo, uint256 _value) external{
+function generatePlayerRequest(uint256 _playerID, address _transferTo, uint256 _price, address _stakeholder) external{
 require(baseAccountCheck(_transferTo) && baseAccountCheck(msg.sender), "You are not base or address to transfer");
 _exists(_playerID);
 
+acceptTransfers[_stakeholder][msg.sender]._teamAccept = true;
+playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
+ _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
 
 }
 
-    function executeTransaction(bytes32 _transaction) external{
-
+    function executeTransaction(uint _playersID, address _stakeholder) external{
+    baseAccountCheck(msg.sender);
+        require(acceptTransfers[_stakeholder][msg.sender]._bothAcept = true, "not both accept transfer player");
     }
 
     

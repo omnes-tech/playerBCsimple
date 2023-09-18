@@ -5,15 +5,14 @@ interface IBaseAccount {
     ///@dev Function to generate player transfer request
     ///@param _player is the playerID in the passport smart contract
     ///@param _transferTo is the base account address that will be receiving the player
-    function generatePlayerRequest(uint256 _player, address _transferTo, uint256 _amount) external;
+    function generatePlayerRequest(uint256 _player, address _transferTo, uint256 _amount, address _stakeholder) external;
 
     ///@dev Function to execute a transfer
-    ///@param _transaction is the transaction hash of that transfer
+    ///@param _playersID is the transaction hash of that transfer
     ///@notice only a federal account can trigger that
-    function executeTransaction(bytes32 _transaction) external;
+    function executeTransaction(uint _playersID, address _stakeholder) external;
 
     ///@dev Function to change the single manager of the base account
-    ///@param _manager is the new manager address
     //function changeManagerBase(address _manager) external;
 
     ///@dev Function to deposit amounts for future transactions

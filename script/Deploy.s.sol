@@ -3,11 +3,10 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import "../src/PassportControler.sol";
-import "../src/ShareholderFactory.sol";
 import "../src/Utils/FactoryBeacon.sol";
-import "../src/shareholders/BaseAccount.sol";
-import "../src/shareholders/FederalAccount.sol";
-import "../src/shareholders/InternationalAccount.sol";
+//import "../src/shareholders/BaseAccount.sol";
+// import "../src/shareholders/FederalAccount.sol";
+// import "../src/shareholders/InternationalAccount.sol";
 import "../test/Utils/MockERC20.sol";
 
 contract Deploy is Script {
