@@ -10,7 +10,7 @@ interface IFederalAccount {
     ///@dev Function that generates a transfer request
     ///@param _player is the voting to be approved
     ///@notice only a base account can create
-    function generatePlayerRequest(uint _player, address _team) external;
+    function generatePlayerRequestFederal(uint _player, address _team) external;
 
     ///@dev Function to accept a transfer request
     ///@param _player  is the transfer to be approved
@@ -19,7 +19,7 @@ interface IFederalAccount {
     ///@dev Function to execute the transaction
     ///@param _player is the transaction ID
     ///@notice only international account can trigger that
-    function executeTransactionBase(uint _player, address _base) external;
+    function executeTransactionFederal(uint _player, address _base) external;
 
     ///@dev Function to add a new base account under this entity accepted addresses of base accounts
     ///@param _baseAccount is the base account address to be added

@@ -3,13 +3,12 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-import "../src/PassportControler.sol";
 import "../src/simple/PlayersBCsimple.sol";
 import "../test/Utils/MockERC20.sol";
 
 contract CounterTest is Test {
 
-    PassportController public passportImplementation;
+    
     PlayersBCsimple public playersBCsimple;
     mockERC20 public payment;
 
@@ -48,20 +47,42 @@ contract CounterTest is Test {
         vm.prank(manager,manager);
     }
 
-    function testMintPassport() public {
+    function testTudo() public {
 
          vm.prank(owner,owner);
+         payment.mint(address(playersBCsimple), 10000000000000000000000000000000000000000000);
+         payment.balanceOf(address(playersBCsimple));
          //address[2] memory federals = [managerFederal, manager];
+         vm.prank(owner,owner);
          playersBCsimple.addiInternational(managerFederal);
          vm.prank(managerFederal,managerFederal);
          playersBCsimple.addFederalAccount(managerFederal);
          vm.prank(managerFederal,managerFederal);
          playersBCsimple.addBaseAccount(user);  
+        
         vm.prank(user,user);
         uint256 birth = 168783864;
-        playersBCsimple.createPlayerPassport(birth, user, manager); 
+        uint256 birth2 = 268783864;
+        playersBCsimple.createPlayerPassport(birth, user, manager);
+        playersBCsimple.createPlayerPassport(birth2, user, manager); 
+        
+        playersBCsimple.getPlayerInfo(0);
+        playersBCsimple.getPlayerInfo(1);
+
+        vm.prank(managerFederal,managerFederal);
+        playersBCsimple.addBaseAccount(manager);
         
 
+        vm.prank(user,user);
+        uint256 price = 1000;
+        playersBCsimple.generatePlayerRequestBase(0, manager, price, managerFederal);
+
+        vm.prank(managerFederal);
+        playersBCsimple.acceptVoteFederal(0, user);
+
+        vm.prank(user,user);
+        playersBCsimple.executeTransactionBase(0, user);
         
+
     }
 }

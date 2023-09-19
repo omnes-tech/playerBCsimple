@@ -79,12 +79,19 @@ function createPlayerPassport(uint256 _birth,
 address _baseAccount, 
 address _agent) external returns(uint256){ //mint for base account
 if(!baseAccountCheck(_baseAccount)) revert("not base account");
-unchecked{
-players[_nextTokenId()-1]._birthTimestamp = _birth; //unistimestamp
-players[_nextTokenId()-1]._currentBase = _baseAccount;
-players[_nextTokenId()-1]._creation = block.timestamp;
-players[_nextTokenId()-1]._playerController = _agent;
-}
+//unchecked{
+players[_nextTokenId()] = PlayerInfo({
+    _birthTimestamp:_birth,
+    _creation: block.timestamp,
+    _currentBase:_baseAccount,
+    _playerController:_agent,
+    _retired:false
+});  // deu erro com -1 de underflow
+// players[_nextTokenId()-1]._birthTimestamp = _birth; //unistimestamp
+// players[_nextTokenId()-1]._currentBase = _baseAccount;
+// players[_nextTokenId()-1]._creation = block.timestamp;
+// players[_nextTokenId()-1]._playerController = _agent;
+// }
 _safeMint(_baseAccount, 1, "");
 
 return (_nextTokenId()-1);
@@ -131,11 +138,12 @@ if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
 
 
 function _solidarityMechanism(uint _value, address _base, address _team) internal {
-    uint256 fivePercentBase = _value*100/5; //5%
+    unchecked {
+        uint256 fivePercentBase = _value*5/100; //5%
     uint amountTransfer = _value - fivePercentBase;
-    
-    IERC20(COIN).transfer(_base, fivePercentBase);
+    IERC20(COIN).transfer( _base, fivePercentBase);
     IERC20(COIN).transfer(_team, amountTransfer);
+    }
 
 
 }
@@ -182,7 +190,7 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
 //federalaccounts ----
 
 
-    function generatePlayerRequest(uint _playerID, address _base) external{
+    function generatePlayerRequestFederal(uint _playerID, address _base) external{
     require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
     if(!_exists(_playerID)) revert("not exist player");
     acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
@@ -202,7 +210,7 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
     }
 
     
-    function executeTransactionBase(uint _playerID, address _base) external{
+    function executeTransactionFederal(uint _playerID, address _base) external{
         require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
         if(!baseAccountCheck(_base)) revert("not base account");
         if(!transferPlayer( _playerID, _base)) revert("transfer player not execute yeat");
@@ -231,7 +239,7 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
 
 //baseaccounts ----
 
-function generatePlayerRequest(uint256 _playerID, address _transferTo, uint256 _price, address _stakeholder) external{
+function generatePlayerRequestBase(uint256 _playerID, address _transferTo, uint256 _price, address _stakeholder) external{
 require(baseAccountCheck(_transferTo) && baseAccountCheck(msg.sender), "addresses not interested in base teams");
 if(!_exists(_playerID)) revert("not exist player");
 
@@ -241,15 +249,17 @@ transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID
 
 }
 
-    function executeTransaction(uint _playersID, address _stakeholder) external{
+    function executeTransactionBase(uint _playersID, address _stakeholder) external{
     if(!baseAccountCheck(msg.sender)) revert("not base account");
     if(!_exists(_playersID)) revert("not exist player");
-        require(acceptTransfers[_stakeholder][msg.sender]._bothAcept = true, "not both accept transfer player");
+        //require(acceptTransfers[_stakeholder][msg.sender]._bothAcept = true, "not both accept transfer player");
         //address trainer = trainers[_playersID]._trainer; // isso e p time ou treinador?
-        uint price = transfers[msg.sender]._price;
-        address teamTransferPLayerFromBase = transfers[msg.sender]._team; 
-        if(!transferPlayer(_playersID, teamTransferPLayerFromBase)) revert("There was no transfer, the payment will not be executed");
-        _solidarityMechanism(price, msg.sender, teamTransferPLayerFromBase);
+            uint256 price = transfers[msg.sender]._price;
+            address teamTransferPLayerFromBase = transfers[msg.sender]._team;
+        
+            //if(!transferPlayer(_playersID, teamTransferPLayerFromBase)) revert("There was no transfer, the payment will not be executed");
+           
+            _solidarityMechanism(price, msg.sender, teamTransferPLayerFromBase);
 
     }
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "../src/PassportControler.sol";
+
 import "../src/Utils/FactoryBeacon.sol";
 //import "../src/shareholders/BaseAccount.sol";
 // import "../src/shareholders/FederalAccount.sol";
