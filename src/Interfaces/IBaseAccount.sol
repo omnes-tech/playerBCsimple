@@ -26,7 +26,7 @@ interface IBaseAccount {
     ///@dev Function to approve other base account to move money on a transfer
     ///@param _spender is the address of the base account that will move the money
     ///@param _amount is the amount of money that the _spender can move
-    function approveOutsider(address _spender, uint256 _amount) external returns(bool);
+    function transferOutsider(address _spender, uint256 _amount) external returns(bool);
 
     ///@dev Function to change the payment token
     ///@param _paymentToken is the new payment token

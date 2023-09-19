@@ -3,77 +3,64 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console.sol";
-// import "../src/PassportControler.sol";
-// import "../src/ShareholderFactory.sol";
-// import "../src/Utils/FactoryBeacon.sol";
-// import "../src/shareholders/BaseAccount.sol";
-// import "../src/shareholders/FederalAccount.sol";
-// import "../src/shareholders/InternationalAccount.sol";
-// import "../test/Utils/MockERC20.sol";
+import "../src/PassportControler.sol";
+import "../src/simple/PlayersBCsimple.sol";
+import "../test/Utils/MockERC20.sol";
 
 contract CounterTest is Test {
 
-    // PassportController public passportImplementation;
-    // PassportController public passport;
-    // ShareholderFactory public factory;
-    // BaseAccount public baseImplementation;
-    // BaseAccountBeacon public baseBeacon;
-    // FederalAccount public federalImplementation;
-    // FederalAccountBeacon public federalBeacon;
-    // InternationalAccount public internationalImplementation;
-    // InternationalAccountBeacon public internationalBeacon;
-    // mockERC20 public payment;
+    PassportController public passportImplementation;
+    PlayersBCsimple public playersBCsimple;
+    mockERC20 public payment;
 
-    // address owner;
-    // uint256 ownerPrivateKey;
-    // address user;
-    // uint256 userPrivateKey;
-    // address manager1;
-    // uint256 manager1PrivateKey;
-    // address manager2;
-    // uint256 manager2PrivateKey;
-    // address manager3;
-    // uint256 manager3PrivateKey;
+    address owner;
+    uint256 ownerPrivateKey;
+    address user;
+    uint256 userPrivateKey;
+    address managerBase;
+    uint256 manager1PrivateKey;
+    address managerFederal;
+    uint256 manager2PrivateKey;
+    address manager;
+    uint256 manager3PrivateKey;
 
-    // address[] managers;
+     address[] managers;
 
     function setUp() public {
 
-        // (owner, ownerPrivateKey) = makeAddrAndKey("owner");
-        // (user, userPrivateKey) = makeAddrAndKey("user");
-        // (manager1, manager1PrivateKey) = makeAddrAndKey("manager1");
-        // (manager2, manager2PrivateKey) = makeAddrAndKey("manager2");
-        // (manager3, manager3PrivateKey) = makeAddrAndKey("manager3");
+        (owner, ownerPrivateKey) = makeAddrAndKey("owner");
+        (user, userPrivateKey) = makeAddrAndKey("user");
+        (manager, manager1PrivateKey) = makeAddrAndKey("manager");
+        (managerBase, manager2PrivateKey) = makeAddrAndKey("managerBase");
+        (managerFederal, manager3PrivateKey) = makeAddrAndKey("managerFederal");
 
-        // managers.push(manager1);
-        // managers.push(manager2);
-        // managers.push(manager3);
+        managers.push(manager);
+        managers.push(managerBase);
+        managers.push(managerFederal);
 
-        // vm.startPrank(owner,owner);
+        vm.startPrank(owner,owner);
 
-        // payment = new mockERC20("Payment", "P2P");
-        // baseImplementation = new BaseAccount();
-        // baseBeacon = new BaseAccountBeacon(address(baseImplementation));
-        // federalImplementation = new FederalAccount();
-        // federalBeacon = new FederalAccountBeacon(address(federalImplementation));
-        // internationalImplementation = new InternationalAccount();
-        // internationalBeacon = new InternationalAccountBeacon(address(internationalImplementation));
+        payment = new mockERC20("Payment", "P2P");
+        playersBCsimple = new PlayersBCsimple(address(payment));
         
-        // bytes memory construtor = abi.encodeWithSignature("initialize(string,string,address[])", "Passport", "PSP", managers);
-        
-        // passportImplementation = new PassportController();
-        // passport = PassportController (address(new UUPSPassport(address(passportImplementation), construtor)));
-        // factory = new ShareholderFactory(address(baseBeacon),address(federalBeacon),address(internationalBeacon),address(passport),address(payment),managers);
-        
-        // vm.stopPrank();
+        vm.stopPrank();
 
-        // vm.prank(manager1,manager1);
+        vm.prank(manager,manager);
         // passport.setFactory(address(factory));
     }
 
     function testMintPassport() public {
 
-        // vm.prank(manager1,manager1);
+         vm.prank(owner,owner);
+         //address[2] memory federals = [managerFederal, manager];
+         playersBCsimple.addiInternational(managerFederal);
+         vm.prank(managerFederal,managerFederal);
+         playersBCsimple.addFederalAccount(managerFederal);
+         vm.prank(managerFederal,managerFederal);
+         playersBCsimple.addBaseAccount(user);  
+        vm.prank(user,user);
+        uint256 birth = 168783864;
+        playersBCsimple.createPlayerPassport(birth, user, manager); 
         // address International = factory.newInternationalShareholder(manager3);
         // vm.prank(manager3,manager3);
         // address Federal = InternationalAccount(International).generateFederalAccount(manager2);

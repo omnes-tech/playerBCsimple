@@ -70,6 +70,7 @@ uint256 constant _24YEARS = 365 days * 24;
 
 constructor(address _coin)ERC721A("PlayersBC", "PLBC"){
 COIN = _coin;
+managers[msg.sender] = true;
 }
 
 //passaport ----
@@ -77,13 +78,13 @@ COIN = _coin;
 function createPlayerPassport(uint256 _birth, 
 address _baseAccount, 
 address _agent) external returns(uint256){ //mint for base account
-baseAccountCheck(_baseAccount);
+if(!baseAccountCheck(_baseAccount)) revert("not base account");
+unchecked{
 players[_nextTokenId()-1]._birthTimestamp = _birth; //unistimestamp
 players[_nextTokenId()-1]._currentBase = _baseAccount;
 players[_nextTokenId()-1]._creation = block.timestamp;
 players[_nextTokenId()-1]._playerController = _agent;
-        
-
+}
 _safeMint(_baseAccount, 1, "");
 
 return (_nextTokenId()-1);
@@ -91,8 +92,8 @@ return (_nextTokenId()-1);
 }
 
 
-function transferPlayer(uint256 _playerID, address _to) external returns(bool){
-    baseAccountCheck(_to);
+function transferPlayer(uint256 _playerID, address _to) public returns(bool){
+    if(!baseAccountCheck(_to)) revert("not base address");
     PlayerInfo memory _auxPlayer = players[_playerID];
     TrainerInfo memory _auxTrainer = trainers[_playerID][trainers[_playerID].length-1];
     require(!_auxPlayer._retired, "Passport Controller : Player is retired");
@@ -143,32 +144,56 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
 
 //internationalccounts ----
 
-function addFederalAccount(address _manager) external{
-_isManager();
-international[_manager]=true;
-}
-    function generatePlayerRequestInternational(bytes32 _vote) external{
 
+    function addiInternational(address _international) public {
+        _isManager();
+
+        international[_international] = true;
     }
 
-    function acceptVoteInternacional(bytes32 _vote) external{
-
+    function addFederalAccount(address _federal) external{
+    require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+    federal[_federal]=true;
+    }
+    function generatePlayerRequestInternational(uint _playerID, address _team) external{
+    require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+    if(!_exists(_playerID)) revert("not exist player");
+    acceptTransfers[msg.sender][_team]._stakeholderAccept = true;
+    playerTransfer({_team: _team, _playerId: _playerID, _price: 0,
+     _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
     }
 
-    function changeManagerInternational(address _manager) external{
+    function acceptVoteInternacional(uint _playerID, address _team) external{
+        require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+        if(!_exists(_playerID)) revert("not exist player");
+        if(acceptTransfers[msg.sender][_team]._teamAccept == true){
+        acceptTransfers[msg.sender][_team]._stakeholderAccept = true;
+        } else {
+            revert("team not Request transfer this player");
+        }
+    }
 
+    function changeManagerInternational(address _newinternational) external{
+    require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+    addiInternational(_newinternational);
     }
 
 
 //federalaccounts ----
 
 
-    function generatePlayerRequest(uint _playerID) external{
-
+    function generatePlayerRequest(uint _playerID, address _base) external{
+    require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+    if(!_exists(_playerID)) revert("not exist player");
+    acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
+    playerTransfer({_team: _base, _playerId: _playerID, _price: 0,
+     _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
     }
 
     function acceptVoteFederal(uint _playerID, address _base) external{
-        baseAccountCheck(_base);
+        if(!baseAccountCheck(_base)) revert("not base account");
+        require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+        if(!_exists(_playerID)) revert("not exist player");
         if(acceptTransfers[msg.sender][_base]._teamAccept == true){
         acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
         } else {
@@ -178,22 +203,26 @@ international[_manager]=true;
 
     
     function executeTransactionBase(uint _playerID, address _base) external{
-        _isFederal();
-        baseAccountCheck(_base);
-        require(acceptTransfers[msg.sender][_base]._bothAcept = true, "not both accept transfer player");
+        require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
+        if(!baseAccountCheck(_base)) revert("not base account");
+        if(!transferPlayer( _playerID, _base)) revert("transfer player not execute yeat");
+        if(!acceptTransfers[msg.sender][_base]._bothAcept) revert("not both accept transfer player");
+        uint price = transfers[msg.sender]._price;
+        address teamTransferPLayerFromBase = transfers[msg.sender]._team; 
+        if(!transferPlayer(_playerID, teamTransferPLayerFromBase)) revert("There was no transfer, the payment will not be executed");
+        _solidarityMechanism(price, msg.sender, teamTransferPLayerFromBase);
         
     }
 
     
     function addBaseAccount(address _baseAccount) external{
-        _isFederal();
+        require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
         base[_baseAccount]=true;
     }
 
    
     function removeBaseAccount(address _baseAccount) external{
-        
-        _isFederal();
+       require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
         base[_baseAccount]=false;
     }
 
@@ -203,33 +232,46 @@ international[_manager]=true;
 //baseaccounts ----
 
 function generatePlayerRequest(uint256 _playerID, address _transferTo, uint256 _price, address _stakeholder) external{
-require(baseAccountCheck(_transferTo) && baseAccountCheck(msg.sender), "You are not base or address to transfer");
-_exists(_playerID);
+require(baseAccountCheck(_transferTo) && baseAccountCheck(msg.sender), "addresses not interested in base teams");
+if(!_exists(_playerID)) revert("not exist player");
 
 acceptTransfers[_stakeholder][msg.sender]._teamAccept = true;
-playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
+transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
  _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
 
 }
 
     function executeTransaction(uint _playersID, address _stakeholder) external{
-    baseAccountCheck(msg.sender);
+    if(!baseAccountCheck(msg.sender)) revert("not base account");
+    if(!_exists(_playersID)) revert("not exist player");
         require(acceptTransfers[_stakeholder][msg.sender]._bothAcept = true, "not both accept transfer player");
+        //address trainer = trainers[_playersID]._trainer; // isso e p time ou treinador?
+        uint price = transfers[msg.sender]._price;
+        address teamTransferPLayerFromBase = transfers[msg.sender]._team; 
+        if(!transferPlayer(_playersID, teamTransferPLayerFromBase)) revert("There was no transfer, the payment will not be executed");
+        _solidarityMechanism(price, msg.sender, teamTransferPLayerFromBase);
+
     }
 
     
     function changeManager(address _manager) external{
+        if(!managers[msg.sender]) revert("You're not a manager");
+        managers[_manager]=true;
 
     }
 
     
-    function approveOutsider(address _spender, uint256 _amount) external returns(bool){
-
+    function transferOutsider(address _to, uint256 _amount) external returns(bool){
+        if(!managers[msg.sender]) revert("You're not a manager");
+        IERC20(COIN).transferFrom(address(this), _to, _amount);
+        return true;
     }
 
     
     function changePaymentToken(address _paymentToken) external returns(bool){
-
+        if(!managers[msg.sender]) revert("You're not a manager");
+        COIN = _paymentToken;
+        return true;
     }
 
 
@@ -299,9 +341,6 @@ playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
         return baseURI;
     }
 
-    function setCoin(address _newcoin)external{
-        COIN = _newcoin;
-    }
 
 
     //control trasnfer passaport
