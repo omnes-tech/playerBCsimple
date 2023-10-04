@@ -3,26 +3,29 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 
-import "../src/Utils/FactoryBeacon.sol";
-//import "../src/shareholders/BaseAccount.sol";
-// import "../src/shareholders/FederalAccount.sol";
-// import "../src/shareholders/InternationalAccount.sol";
+
+import "forge-std/console.sol";
+import "../src/simple/PlayersBCsimple.sol";
 import "../test/Utils/MockERC20.sol";
 
 contract Deploy is Script {
 
-    // PassportController public passportImplementation;
-    // PassportController public passport;
-    // ShareholderFactory public factory;
-    // BaseAccount public baseImplementation;
-    // BaseAccountBeacon public baseBeacon;
-    // FederalAccount public federalImplementation;
-    // FederalAccountBeacon public federalBeacon;
-    // InternationalAccount public internationalImplementation;
-    // InternationalAccountBeacon public internationalBeacon;
-    // mockERC20 public payment;
+    
+   PlayersBCsimple public playersBCsimple;
+    mockERC20 public payment;
 
-    // address[] managers;
+    address owner;
+    uint256 ownerPrivateKey;
+    address user;
+    uint256 userPrivateKey;
+    address managerBase;
+    uint256 manager1PrivateKey;
+    address managerFederal;
+    uint256 manager2PrivateKey;
+    address manager;
+    uint256 manager3PrivateKey;
+    address managerInter;
+    uint256 manager4PrivateKey;
 
     function setUp() public {
       //  managers.push(0x2271b1FBb0126F79b54b45f4787733286D035fe5);
@@ -32,20 +35,9 @@ contract Deploy is Script {
     function run() public {
         vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
 
-        // payment = new mockERC20("Payment", "P2P");
-        // baseImplementation = new BaseAccount();
-        // baseBeacon = new BaseAccountBeacon(address(baseImplementation));
-        // federalImplementation = new FederalAccount();
-        // federalBeacon = new FederalAccountBeacon(address(federalImplementation));
-        // internationalImplementation = new InternationalAccount();
-        // internationalBeacon = new InternationalAccountBeacon(address(internationalImplementation));
-
-        // bytes memory construtor = abi.encodeWithSignature("initialize(string,string,address[])", "Passport", "PSP", managers);
-        
-        // passportImplementation = new PassportController();
-        // passport = PassportController (address(new UUPSPassport(address(passportImplementation), construtor)));
-        // factory = new ShareholderFactory(address(baseBeacon),address(federalBeacon),address(internationalBeacon),address(passport),address(payment),managers);
-
+        payment = new mockERC20("Payment", "P2P");
+        playersBCsimple = new PlayersBCsimple(address(payment));
+      
 
         vm.stopBroadcast();
     }

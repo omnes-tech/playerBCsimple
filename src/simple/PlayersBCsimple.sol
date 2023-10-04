@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.0;
 
 
 import "lib/ERC721A/contracts/ERC721A.sol";
@@ -86,26 +86,25 @@ players[_nextTokenId()] = PlayerInfo({
     _currentBase:_baseAccount,
     _playerController:_agent,
     _retired:false
-});  // deu erro com -1 de underflow
-// players[_nextTokenId()-1]._birthTimestamp = _birth; //unistimestamp
-// players[_nextTokenId()-1]._currentBase = _baseAccount;
-// players[_nextTokenId()-1]._creation = block.timestamp;
-// players[_nextTokenId()-1]._playerController = _agent;
-// }
+});  
+
+trainers[_nextTokenId()].push(TrainerInfo(_baseAccount, 0, block.timestamp));
 _safeMint(_baseAccount, 1, "");
 
-return (_nextTokenId()-1);
+
+
+return (_nextTokenId());
 
 }
 
 
-function transferPlayer(uint256 _playerID, address _to) public returns(bool){
+function transferPlayer(uint256 _playerID, address _to) internal {
     if(!baseAccountCheck(_to)) revert("not base address");
     PlayerInfo memory _auxPlayer = players[_playerID];
-    TrainerInfo memory _auxTrainer = trainers[_playerID][trainers[_playerID].length-1];
+    TrainerInfo memory _auxTrainer = trainers[_playerID][trainers[_playerID].length-1];//-1
     require(!_auxPlayer._retired, "Passport Controller : Player is retired");
 
-if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
+ if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
             trainers[_playerID][trainers[_playerID].length-1]._duration = block.timestamp - _auxTrainer._timestamp;
             TrainerInfo memory _newTrainer = TrainerInfo({
                     _trainer : _to,
@@ -114,10 +113,10 @@ if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
             });
             trainers[_playerID].push(_newTrainer);
 
-        }else if(_auxTrainer._duration == 0){
-            uint256 _auxDuration = _auxPlayer._birthTimestamp + _24YEARS - _auxTrainer._timestamp;
+          }else if(_auxTrainer._duration == 0){
+           uint256 _auxDuration = _auxPlayer._birthTimestamp + _24YEARS - _auxTrainer._timestamp;
 
-            trainers[_playerID][trainers[_playerID].length-1]._duration = _auxDuration;
+           trainers[_playerID][trainers[_playerID].length- 1]._duration = _auxDuration; //-1
 
         }
         
@@ -127,7 +126,7 @@ if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
         // _solidarityMechanism();
         transferFrom(msg.sender, _to, _playerID);
 
-        return true;
+        //return true;
 
 }
 
@@ -163,19 +162,19 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
     require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
     federal[_federal]=true;
     }
-    function generatePlayerRequestInternational(uint _playerID, address _team) external{
+    function generatePlayerRequestInternational(uint _playerID, address _base, address _transferTo, uint256 _price) external{
     require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
     if(!_exists(_playerID)) revert("not exist player");
-    acceptTransfers[msg.sender][_team]._stakeholderAccept = true;
-    playerTransfer({_team: _team, _playerId: _playerID, _price: 0,
-     _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
+   acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
+    transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
+ _bothAcept: false, _teamAccept: false, _stakeholderAccept: true});
     }
 
-    function acceptVoteInternacional(uint _playerID, address _team) external{
+    function acceptVoteInternacional(uint _playerID, address _base) external{
         require(international[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
         if(!_exists(_playerID)) revert("not exist player");
-        if(acceptTransfers[msg.sender][_team]._teamAccept == true){
-        acceptTransfers[msg.sender][_team]._stakeholderAccept = true;
+        if(acceptTransfers[msg.sender][_base]._teamAccept){
+        acceptTransfers[msg.sender][_base]._bothAcept = true;
         } else {
             revert("team not Request transfer this player");
         }
@@ -190,35 +189,46 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
 //federalaccounts ----
 
 
-    function generatePlayerRequestFederal(uint _playerID, address _base) external{
+    function generatePlayerRequestFederal(uint _playerID, address _base, address _transferTo, uint256 _price) external{
     require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
     if(!_exists(_playerID)) revert("not exist player");
+    if(!baseAccountCheck(_base))
     acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
-    playerTransfer({_team: _base, _playerId: _playerID, _price: 0,
-     _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
+    transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
+ _bothAcept: false, _teamAccept: false, _stakeholderAccept: true});
+   
+
+}
+
+    function acceptBaseandExecute(uint _playersID, address _stakeholderRequest, address _transferTo) external{
+        if(!baseAccountCheck(msg.sender))
+        if(!_exists(_playersID)) revert("not exist player");
+        acceptTransfers[_stakeholderRequest][msg.sender]._bothAcept = true;
+        transferPlayer(_playersID, _transferTo);
+            uint256 price = transfers[_stakeholderRequest]._price;
+            _solidarityMechanism(price, msg.sender, _transferTo);
     }
 
     function acceptVoteFederal(uint _playerID, address _base) external{
-        if(!baseAccountCheck(_base)) revert("not base account");
+        if(!baseAccountCheck(_base))
         require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
         if(!_exists(_playerID)) revert("not exist player");
-        if(acceptTransfers[msg.sender][_base]._teamAccept == true){
-        acceptTransfers[msg.sender][_base]._stakeholderAccept = true;
+         if(acceptTransfers[msg.sender][_base]._teamAccept){
+        acceptTransfers[msg.sender][_base]._bothAcept = true;
         } else {
             revert("team not Request transfer this player");
         }
     }
 
     
+    
     function executeTransactionFederal(uint _playerID, address _base) external{
         require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
-        if(!baseAccountCheck(_base)) revert("not base account");
-        if(!transferPlayer( _playerID, _base)) revert("transfer player not execute yeat");
         if(!acceptTransfers[msg.sender][_base]._bothAcept) revert("not both accept transfer player");
-        uint price = transfers[msg.sender]._price;
-        address teamTransferPLayerFromBase = transfers[msg.sender]._team; 
-        if(!transferPlayer(_playerID, teamTransferPLayerFromBase)) revert("There was no transfer, the payment will not be executed");
-        _solidarityMechanism(price, msg.sender, teamTransferPLayerFromBase);
+        uint price = transfers[_base]._price;
+        address teamTransferPLayerFromBase = players[_playerID]._currentBase; 
+        safeTransferFrom(_base, teamTransferPLayerFromBase, _playerID);
+        _solidarityMechanism(price, _base, teamTransferPLayerFromBase);
         
     }
 
@@ -242,24 +252,21 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
 function generatePlayerRequestBase(uint256 _playerID, address _transferTo, uint256 _price, address _stakeholder) external{
 require(baseAccountCheck(_transferTo) && baseAccountCheck(msg.sender), "addresses not interested in base teams");
 if(!_exists(_playerID)) revert("not exist player");
-
+require(federal[_stakeholder]|| managers[_stakeholder] || international[_stakeholder], "not stakeholder");
 acceptTransfers[_stakeholder][msg.sender]._teamAccept = true;
+
 transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID, _price: _price,
  _bothAcept: false, _teamAccept: true, _stakeholderAccept: false});
 
 }
 
-    function executeTransactionBase(uint _playersID, address _stakeholder) external{
+    function executeTransactionBase(uint _playersID, address _stakeholder, address _transferTo) external{
     if(!baseAccountCheck(msg.sender)) revert("not base account");
     if(!_exists(_playersID)) revert("not exist player");
-        //require(acceptTransfers[_stakeholder][msg.sender]._bothAcept = true, "not both accept transfer player");
-        //address trainer = trainers[_playersID]._trainer; // isso e p time ou treinador?
+        require(acceptTransfers[_stakeholder][msg.sender]._bothAcept == true, "not both accept transfer player");
+            transferPlayer(_playersID, _transferTo);
             uint256 price = transfers[msg.sender]._price;
-            address teamTransferPLayerFromBase = transfers[msg.sender]._team;
-        
-            //if(!transferPlayer(_playersID, teamTransferPLayerFromBase)) revert("There was no transfer, the payment will not be executed");
-           
-            _solidarityMechanism(price, msg.sender, teamTransferPLayerFromBase);
+            _solidarityMechanism(price, msg.sender, _transferTo);
 
     }
 
@@ -273,7 +280,9 @@ transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID
     
     function transferOutsider(address _to, uint256 _amount) external returns(bool){
         if(!managers[msg.sender]) revert("You're not a manager");
-        IERC20(COIN).transferFrom(address(this), _to, _amount);
+        unchecked {
+        IERC20(COIN).transfer(_to, _amount);
+        }
         return true;
     }
 
@@ -355,14 +364,14 @@ transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID
 
     //control trasnfer passaport
 
-    // function safeTransferFrom(
-    //     address from,
-    //     address to,
-    //     uint256 tokenId
-    // ) public payable virtual override {
-    //     _isPassport();
-    //     safeTransferFrom(from, to, tokenId, '');
-    // }
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public payable virtual override {
+        require(federal[to]|| managers[to] || international[to] || base[to]);
+        safeTransferFrom(from, to, tokenId, '');
+    }
 
 
     function deposit(uint256 _amount) external returns(bool) {

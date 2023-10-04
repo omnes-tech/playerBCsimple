@@ -10,7 +10,7 @@ interface IBaseAccount {
     ///@dev Function to execute a transfer
     ///@param _playersID is the transaction hash of that transfer
     ///@notice only a federal account can trigger that
-    function executeTransactionBase(uint _playersID, address _stakeholder) external;
+    function executeTransactionBase(uint _playersID, address _stakeholder, address _transferTo) external;
 
     ///@dev Function to change the single manager of the base account
     //function changeManagerBase(address _manager) external;

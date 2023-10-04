@@ -37,7 +37,7 @@ interface IPassportController{
     ///@dev Function to transfer a player between 2 base accounts
     ///@param _playerID is the player identification to be transfered
     ///@param _to is the address of the receiver base account
-    function transferPlayer(uint256 _playerID, address _to) external returns(bool);
+    //function transferPlayer(uint256 _playerID, address _to) external;
 
 
 }

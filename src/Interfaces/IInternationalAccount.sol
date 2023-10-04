@@ -11,7 +11,7 @@ interface IInternationalAccount{
     ///@dev Function to generate player transfer voting
     ///@param _PlayerID is the transfer transaction ID
     ///@notice only a federal account can create
-    function generatePlayerRequestInternational(uint _PlayerID, address _team) external;
+    function generatePlayerRequestInternational(uint _PlayerID, address _base, address _transferTo, uint256 _price) external;
 
     ///@dev Function to accept the transaction
     ///@param _PlayerID is the transaction ID

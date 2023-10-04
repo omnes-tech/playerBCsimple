@@ -10,7 +10,7 @@ interface IFederalAccount {
     ///@dev Function that generates a transfer request
     ///@param _player is the voting to be approved
     ///@notice only a base account can create
-    function generatePlayerRequestFederal(uint _player, address _team) external;
+    function generatePlayerRequestFederal(uint _player, address _team, address _transferTo, uint256 _price) external;
 
     ///@dev Function to accept a transfer request
     ///@param _player  is the transfer to be approved
