@@ -61,6 +61,8 @@ uint256 constant _24YEARS = 365 days * 24;
 
     mapping(address => mapping(address => playerTransfer)) acceptTransfers;
 
+    mapping(uint256 => uint256) public _playerCareer;
+
     address public COIN;
 
     string public baseURI;
@@ -98,14 +100,18 @@ return (_nextTokenId());
 }
 
 
-function transferPlayer(uint256 _playerID, address _to) internal {
-    if(!baseAccountCheck(_to)) revert("not base address");
-    PlayerInfo memory _auxPlayer = players[_playerID];
-    TrainerInfo memory _auxTrainer = trainers[_playerID][trainers[_playerID].length-1];//-1
-    require(!_auxPlayer._retired, "Passport Controller : Player is retired");
+function transferPlayer(uint256 _playerID, address _to, uint256 _price) public returns(bool){
+        baseAccountCheck(_to);
+        
+        PlayerInfo memory _auxPlayer = players[_playerID];
+        TrainerInfo memory _auxTrainer = trainers[_playerID][trainers[_playerID].length-1];
+        require(!_auxPlayer._retired, "Passport Controller : Player is retired");
 
- if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
+
+        if(block.timestamp - _auxPlayer._birthTimestamp < _24YEARS){
             trainers[_playerID][trainers[_playerID].length-1]._duration = block.timestamp - _auxTrainer._timestamp;
+            _playerCareer[_playerID] += block.timestamp - _auxTrainer._timestamp;
+
             TrainerInfo memory _newTrainer = TrainerInfo({
                     _trainer : _to,
                     _duration : 0,
@@ -113,39 +119,77 @@ function transferPlayer(uint256 _playerID, address _to) internal {
             });
             trainers[_playerID].push(_newTrainer);
 
-          }else if(_auxTrainer._duration == 0){
-           uint256 _auxDuration = _auxPlayer._birthTimestamp + _24YEARS - _auxTrainer._timestamp;
+        }else if(_auxTrainer._duration == 0){
+            uint256 _auxDuration = _auxPlayer._birthTimestamp + _24YEARS - _auxTrainer._timestamp;
 
-           trainers[_playerID][trainers[_playerID].length- 1]._duration = _auxDuration; //-1
+            trainers[_playerID][trainers[_playerID].length-1]._duration = _auxDuration;
+            _playerCareer[_playerID] += _auxDuration;
 
         }
         
         
         players[_playerID]._currentBase = _to;
 
-        // _solidarityMechanism();
-        transferFrom(msg.sender, _to, _playerID);
+        _solidarityMechanism(_playerID,_price);
 
-        //return true;
+        if(federal[msg.sender]|| managers[msg.sender]){
+            address teamTransferPLayerFromBase = players[_playerID]._currentBase; 
+            safeTransferFrom(_to, teamTransferPLayerFromBase, _playerID);
+        }else{
+            transferFrom(msg.sender, _to, _playerID);
+        }
 
-}
+
+
+        return true;
+    }
 
  function getPlayerInfo(uint256 _playerID) external view returns(PlayerInfo memory){
         return players[_playerID];
     }
 
+function _solidarityMechanism(uint256 _playerID, uint256 _price) internal{
+        TrainerInfo[] memory _aux = trainers[_playerID];
+        uint loop = _aux.length;
+        uint duration = _playerCareer[_playerID];
+        require(IERC20(COIN).balanceOf(address(this))>= _price,"Passport Controller : Didn't receive 5%");
+        for(uint256 i = 0; i < loop;){
+            if(loop == 1){
+            IERC20(COIN).transfer(_aux[i]._trainer, _price);
+            }else {
+                uint256 _amount = (_aux[i]._duration*_price)/duration;
+                if(!IERC20(COIN).transfer(_aux[i]._trainer, _amount ))
+                revert("Passport Controller : Payment didn't go through");
+            }
 
+            unchecked {
+                ++i;
+            }
+        }
 
-function _solidarityMechanism(uint _value, address _base, address _team) internal {
-    unchecked {
-        uint256 fivePercentBase = _value*5/100; //5%
-    uint amountTransfer = _value - fivePercentBase;
-    IERC20(COIN).transfer( _base, fivePercentBase);
-    IERC20(COIN).transfer(_team, amountTransfer);
+        if(IERC20(COIN).balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration == 0){
+            if(!IERC20(COIN).transfer(_aux[_aux.length-2]._trainer, IERC20(COIN).balanceOf(address(this)) ))
+            revert("Passport Controller : Payment didn't go through");
+        }else if(IERC20(COIN).balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration > 0){
+            if(!IERC20(COIN).transfer(_aux[_aux.length-1]._trainer, IERC20(COIN).balanceOf(address(this)) ))
+            revert("Passport Controller : Payment didn't go through");
+        }
     }
 
 
-}
+
+
+
+// function _solidarityMechanism(uint _value, address _base, address _team) internal {
+//     unchecked {
+//         uint256 fivePercentBase = _value*5/100; //5%
+//     uint amountTransfer = _value - fivePercentBase;
+//     IERC20(COIN).transfer( _base, fivePercentBase);
+//     IERC20(COIN).transfer(_team, amountTransfer);
+//     }
+
+
+// }
 
 
 
@@ -204,9 +248,9 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
         if(!baseAccountCheck(msg.sender))
         if(!_exists(_playersID)) revert("not exist player");
         acceptTransfers[_stakeholderRequest][msg.sender]._bothAcept = true;
-        transferPlayer(_playersID, _transferTo);
-            uint256 price = transfers[_stakeholderRequest]._price;
-            _solidarityMechanism(price, msg.sender, _transferTo);
+        uint256 price = transfers[_stakeholderRequest]._price;
+        transferPlayer(_playersID, _transferTo, price);
+        // _solidarityMechanism(price, msg.sender, _transferTo);
     }
 
     function acceptVoteFederal(uint _playerID, address _base) external{
@@ -226,9 +270,10 @@ function _solidarityMechanism(uint _value, address _base, address _team) interna
         require(federal[msg.sender]|| managers[msg.sender], "your not stakeholder or manager");
         if(!acceptTransfers[msg.sender][_base]._bothAcept) revert("not both accept transfer player");
         uint price = transfers[_base]._price;
-        address teamTransferPLayerFromBase = players[_playerID]._currentBase; 
-        safeTransferFrom(_base, teamTransferPLayerFromBase, _playerID);
-        _solidarityMechanism(price, _base, teamTransferPLayerFromBase);
+        transferPlayer(_playerID, _base,price);
+        // address teamTransferPLayerFromBase = players[_playerID]._currentBase; 
+        // safeTransferFrom(_base, teamTransferPLayerFromBase, _playerID);
+        // _solidarityMechanism(price, _base, teamTransferPLayerFromBase);
         
     }
 
@@ -264,9 +309,9 @@ transfers[msg.sender] = playerTransfer({_team: _transferTo, _playerId: _playerID
     if(!baseAccountCheck(msg.sender)) revert("not base account");
     if(!_exists(_playersID)) revert("not exist player");
         require(acceptTransfers[_stakeholder][msg.sender]._bothAcept == true, "not both accept transfer player");
-            transferPlayer(_playersID, _transferTo);
-            uint256 price = transfers[msg.sender]._price;
-            _solidarityMechanism(price, msg.sender, _transferTo);
+        uint256 price = transfers[msg.sender]._price;
+        transferPlayer(_playersID, _transferTo,price);
+            // _solidarityMechanism(price, msg.sender, _transferTo);
 
     }
 
