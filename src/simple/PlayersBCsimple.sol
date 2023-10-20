@@ -157,13 +157,13 @@ function _solidarityMechanism(uint256 _playerID, uint256 _price) internal{
         }
     }
 
-        if(COIN.balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration == 0){
-            if(!COIN.transfer(_aux[_aux.length-2]._trainer, COIN.balanceOf(address(this)) ))
-            revert("Passport Controller : Payment didn't go through");
-        }else if(COIN.balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration > 0){
-            if(!COIN.transfer(_aux[_aux.length-1]._trainer, COIN.balanceOf(address(this)) ))
-            revert("Passport Controller : Payment didn't go through");
-        }
+        // if(COIN.balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration == 0){
+        //     if(!COIN.transfer(_aux[_aux.length-2]._trainer, COIN.balanceOf(address(this)) ))
+        //     revert("Passport Controller : Payment didn't go through");
+        // }else if(COIN.balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration > 0){
+        //     if(!COIN.transfer(_aux[_aux.length-1]._trainer, COIN.balanceOf(address(this)) ))
+        //     revert("Passport Controller : Payment didn't go through");
+        // }
     }
 
 
