@@ -189,4 +189,9 @@ contract CounterTest is Test {
 
 
     }
+
+    function test24years() public {
+        uint256 _years = 365 days * 24;
+        console.logUint(_years);
+    }
 }
