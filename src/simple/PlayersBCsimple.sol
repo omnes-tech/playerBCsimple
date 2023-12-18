@@ -215,7 +215,6 @@ function acceptBaseandExecute(uint _playersID, address _stakeholderRequest, addr
     acceptTransfers[_stakeholderRequest][msg.sender]._bothAcept = true;
     uint256 price = transfers[_stakeholderRequest]._price;
     transferPlayer(_playersID, _transferTo, price);
-    // _solidarityMechanism(price, msg.sender, _transferTo);
 }
 
 function acceptVoteFederal(uint _playerID, address _base) external{
