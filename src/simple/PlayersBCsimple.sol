@@ -6,15 +6,8 @@ import "lib/ERC721A/contracts/ERC721A.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import "../Interfaces/IPassportController.sol";
-import "../Interfaces/IFederalAccount.sol";
-import "../Interfaces/IInternationalAccount.sol";
-import "../Interfaces/IBaseAccount.sol";
 
-contract PlayersBCsimple is ERC721A, 
-IPassportController, 
-IFederalAccount,
-IInternationalAccount,
-IBaseAccount{
+contract PlayersBCsimple is ERC721A, IPassportController {
 
     event voteCreated(uint256 indexed _player, bytes32 indexed _voteId, address indexed _to, uint256 _price, address _creator);
     event voted(bytes32 _vote, address _manager);
@@ -156,30 +149,7 @@ function _solidarityMechanism(uint256 _playerID, uint256 _price) internal{
             ++i;
         }
     }
-
-        // if(COIN.balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration == 0){
-        //     if(!COIN.transfer(_aux[_aux.length-2]._trainer, COIN.balanceOf(address(this)) ))
-        //     revert("Passport Controller : Payment didn't go through");
-        // }else if(COIN.balanceOf(address(this)) > 0 && _aux[_aux.length-1]._duration > 0){
-        //     if(!COIN.transfer(_aux[_aux.length-1]._trainer, COIN.balanceOf(address(this)) ))
-        //     revert("Passport Controller : Payment didn't go through");
-        // }
     }
-
-
-
-
-
-// function _solidarityMechanism(uint _value, address _base, address _team) internal {
-//     unchecked {
-//         uint256 fivePercentBase = _value*5/100; //5%
-//     uint amountTransfer = _value - fivePercentBase;
-//     IERC20(COIN).transfer( _base, fivePercentBase);
-//     IERC20(COIN).transfer(_team, amountTransfer);
-//     }
-
-
-// }
 
 
 
@@ -266,10 +236,6 @@ function executeTransactionFederal(uint _playerID, address _base) external{
     if(!acceptTransfers[msg.sender][_base]._bothAcept) revert("not both accept transfer player");
     uint price = transfers[_base]._price;
     transferPlayer(_playerID, _base,price);
-    // address teamTransferPLayerFromBase = players[_playerID]._currentBase; 
-    // safeTransferFrom(_base, teamTransferPLayerFromBase, _playerID);
-    // _solidarityMechanism(price, _base, teamTransferPLayerFromBase);
-    
 }
 
    

@@ -31,7 +31,7 @@ interface IPassportController{
     ///@param _birth is the timestamp of the player's birth
     ///@param _baseAccount is the player's base account current position
     ///@param _agent is the address of the wallet that will control the player's decisions
-    function createPlayerPassport(uint256 _birth, address _baseAccount, address _agent) external returns(uint256);
+    // function createPlayerPassport(uint256 _birth, address _baseAccount, address _agent) external returns(uint256);
 
 
     ///@dev Function to transfer a player between 2 base accounts

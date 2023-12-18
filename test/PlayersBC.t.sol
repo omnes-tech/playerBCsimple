@@ -48,8 +48,6 @@ contract CounterTest is Test {
         playersBCsimple = new PlayersBCsimple(address(payment));
         
         vm.stopPrank();
-
-        vm.prank(manager,manager);
     }
 
     function testBase() public {
@@ -188,10 +186,5 @@ contract CounterTest is Test {
         // playersBCsimple.executeTransactionBase(1, managerInter, user);
 
 
-    }
-
-    function test24years() public {
-        uint256 _years = 365 days * 24;
-        console.logUint(_years);
     }
 }
